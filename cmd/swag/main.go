@@ -21,6 +21,7 @@ const (
 	markdownFilesFlag    = "markdownFiles"
 	parseInternal        = "parseInternal"
 	generatedTimeFlag    = "generatedTime"
+	defaultRequiredFlag  = "defaultRequired"
 )
 
 var initFlags = []cli.Flag{
@@ -74,6 +75,10 @@ var initFlags = []cli.Flag{
 		Name:  "generatedTime",
 		Usage: "Generate timestamp at the top of docs.go, true by default",
 	},
+	&cli.BoolFlag{
+		Name:  defaultRequiredFlag,
+		Usage: "Add required to the field by default",
+	},
 }
 
 func initAction(c *cli.Context) error {
@@ -96,6 +101,7 @@ func initAction(c *cli.Context) error {
 		MarkdownFilesDir:   c.String(markdownFilesFlag),
 		ParseInternal:      c.Bool(parseInternal),
 		GeneratedTime:      c.Bool(generatedTimeFlag),
+		DefaultRequired:    c.Bool(defaultRequiredFlag),
 	})
 }
 

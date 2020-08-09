@@ -64,6 +64,9 @@ type Parser struct {
 	// ParseInternal whether swag should parse internal packages
 	ParseInternal bool
 
+	// Add required to the field by default
+	DefaultRequired bool
+
 	// structStack stores full names of the structures that were already parsed or are being parsed now
 	structStack []string
 
@@ -806,6 +809,7 @@ type structField struct {
 	arrayType    string
 	formatType   string
 	isRequired   bool
+	isOptional   bool
 	readOnly     bool
 	crossPkg     string
 	exampleValue interface{}
@@ -941,7 +945,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			return properties, nil, err
 		}
 		required := make([]string, 0)
-		if structField.isRequired {
+		if structField.isRequired || (parser.DefaultRequired && !structField.isOptional) {
 			required = append(required, structField.name)
 		}
 		properties[structField.name] = spec.Schema{
@@ -963,7 +967,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 			parser.ParseDefinition(pkgName, structField.arrayType,
 				parser.TypeDefinitions[pkgName][structField.arrayType])
 			required := make([]string, 0)
-			if structField.isRequired {
+			if structField.isRequired || (parser.DefaultRequired && !structField.isOptional) {
 				required = append(required, structField.name)
 			}
 			properties[structField.name] = spec.Schema{
@@ -1052,7 +1056,7 @@ func (parser *Parser) parseStructField(pkgName string, field *ast.Field) (map[st
 		} else {
 			// standard type in array
 			required := make([]string, 0)
-			if structField.isRequired {
+			if structField.isRequired || (parser.DefaultRequired && !structField.isOptional) {
 				required = append(required, structField.name)
 			}
 
@@ -1290,12 +1294,20 @@ func (parser *Parser) parseField(pkgName string, field *ast.Field) (*structField
 				structField.isRequired = true
 				break
 			}
+			if val == "omitempty" {
+				structField.isOptional = true
+				break
+			}
 		}
 	}
 	if validateTag := structTag.Get("validate"); validateTag != "" {
 		for _, val := range strings.Split(validateTag, ",") {
 			if val == "required" {
 				structField.isRequired = true
+				break
+			}
+			if val == "omitempty" {
+				structField.isOptional = true
 				break
 			}
 		}
